@@ -31,6 +31,23 @@ c.execute("""CREATE TABLE IF NOT EXISTS vendidos
     quantidade INTEGER NOT NULL,
     data_venda TEXT NOT NULL)""")
 
+# FILTRO DE DADOS
+def so_texto(texto):
+    return
+    #função para retornar apenas texto
+
+def so_numero(numeros):
+    aprovado=True
+    for i in numeros:
+        if type(i) != int:
+            aprovado=False
+    if aprovado:
+        return #normal codigo continua
+    return #mensagem de erro
+    #função para retornar apenas valores numericos
+
+
+
 # lançar vendas
 
 # exportar relatorio
@@ -222,7 +239,6 @@ def editar_usuarios_frame(frame):
     menu_add_users.grid(row=0, column=0, padx=10, pady=10)
     menu_add_users.grid_columnconfigure((0,1), weight=1)
     menu_add_users.grid_rowconfigure(4, weight=1)
-    menu_add_users.configure(width=300)
 
     ctk.CTkLabel(menu_add_users, text="ADD Usuários",
                  font=ctk.CTkFont(size=28)).grid(row=0, column=0, columnspan=2, pady=(5,15))
@@ -248,19 +264,22 @@ def editar_usuarios_frame(frame):
 
     # MENU PARA EDITAR USUARIOS
     menu_edit_users = ctk.CTkFrame(tela_app)
-    menu_edit_users.grid(row=1, column=0, sticky="nswe", padx=10, pady=10)
-    ctk.CTkLabel(menu_edit_users, text="Editar Usuário", font=ctk.CTkFont(size=28)).pack(padx=5, pady=(5,15))
+    menu_edit_users.grid(row=1, column=0, padx=10, pady=10)
+    menu_edit_users.grid_columnconfigure((0, 1), weight=1)
+    menu_edit_users.grid_rowconfigure(4, weight=1)
+    ctk.CTkLabel(menu_edit_users, text="Editar Usuário",
+                 font=ctk.CTkFont(size=28)).grid(row=0, column=0, columnspan=2, pady=(5,15))
 
     entry_edit_id = ctk.CTkEntry(menu_edit_users, placeholder_text="Digite o ID")
-    entry_edit_id.pack(padx=5, pady=10)
+    entry_edit_id.grid(row= 1, column= 0,padx=5, pady=10)
     entry_edit_nome = ctk.CTkEntry(menu_edit_users, placeholder_text="Novo Nome")
-    entry_edit_nome.pack(padx=5, pady=10)
+    entry_edit_nome.grid(row= 1, column= 1,padx=5, pady=10)
     entry_edit_login = ctk.CTkEntry(menu_edit_users, placeholder_text="Novo Login")
-    entry_edit_login.pack(padx=5, pady=10)
+    entry_edit_login.grid(row= 2, column= 0,padx=5, pady=10)
     entry_edit_senha = ctk.CTkEntry(menu_edit_users, placeholder_text="Novo Senha")
-    entry_edit_senha.pack(padx=5, pady=10)
+    entry_edit_senha.grid(row= 2, column= 1,padx=5, pady=10)
     entry_edit_adm = ctk.CTkEntry(menu_edit_users, placeholder_text="Digite se é o administrador")
-    entry_edit_adm.pack(padx=5, pady=10)
+    entry_edit_adm.grid(row= 3, column= 0,padx=5, pady=10)
 
     ctk.CTkButton(menu_edit_users, text="Salvar Edição",
                   command=lambda:
@@ -270,7 +289,7 @@ def editar_usuarios_frame(frame):
                       entry_edit_login.get(),
                       entry_edit_senha.get(),
                       entry_edit_adm.get()),
-                  height=40, fg_color="green").pack(pady=30)
+                  height=40, fg_color="green").grid(row=4, column=0, columnspan=2, pady=30, sticky="ew")
 
     #MENU PARA DELETAR USUARIOS
     menu_delet_users = ctk.CTkFrame(tela_app)
