@@ -12,7 +12,7 @@ c = conn.cursor()
 c.execute("""CREATE TABLE IF NOT EXISTS users 
     (id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT,
-    login TEXT NOT NULL UNIQUE,
+    login TEXT NOT NULL,
     senha TEXT NOT NULL,
     admin TEXT NOT NULL)
     """)
@@ -75,20 +75,20 @@ for user in users:
         conn.commit()
         continue
 
-def add_users(nome,login, senha, admin, atualizar_tabela):
+def add_users(nome,login, senha, admin, callback=None):
     # ID NOME LOGIN SENHA ADMIN(sim/nao)
     c.execute("INSERT INTO users (nome, login, senha, admin) VALUES (?,?,?,?)",
               (nome,login, senha, admin))
     conn.commit()
-    atualizar_tabela
+    if callback:
+        callback()
 
-
-def edit_users(id,nome,login, senha, admin, atualizar_tabela):
+def edit_users(id,nome,login, senha, admin, callback=None):
     c.execute("""UPDATE users SET nome = ?, login = ?, senha = ?, admin = ? WHERE id = ?""",
               (nome,login,senha,admin,id))
     conn.commit()
-    atualizar_tabela
-
+    if callback:
+        callback()
 
 def atualizar_tabela(tree):
     for i in tree.get_children():
@@ -97,18 +97,18 @@ def atualizar_tabela(tree):
     for row in c.fetchall():
         tree.insert("", "end", values=row)
 
-def delet_users(id, atualizar_tabela):
+def delet_users(id, callback=None):
     c.execute("DELETE FROM users WHERE id = ?", (id,))
     conn.commit()
-    atualizar_tabela
-
+    if callback:
+        callback()
 
 
 #---_edit----GUI----------------------GUI-----------------------GUI----------------------GUI----------------------GUI--------
 
 app = ctk.CTk()
 app.title("Controle de vendas")
-app.geometry("1200x1050")
+app.geometry("865x820")
 app.grid_columnconfigure(1, weight=1)  # Col1 (conteúdo) cresce!
 app.grid_rowconfigure(0, weight=1)     # Linha 0 cresce!
 app.grid_columnconfigure(0, weight=0)  # Sidebar fixa!
@@ -181,7 +181,8 @@ def tela_login(tela):
                     editar_vendas_frame(frames[nome_aba])
             return
         else:
-            mensagem_login_incorreto = ctk.CTkLabel(tela, text="Login ou senha incorretos", font=ctk.CTkFont(size=20), text_color="red" )
+            mensagem_login_incorreto = ctk.CTkLabel(tela, text="Login ou senha incorretos",
+                                                    font=ctk.CTkFont(size=20), text_color="red" )
             mensagem_login_incorreto.pack()
             tela.after(2500, mensagem_login_incorreto.destroy)
 
@@ -263,7 +264,7 @@ def editar_usuarios_frame(frame):
                       entry_add_login.get(),
                       entry_add_senha.get(),
                       entry_add_adm.get(),
-                  atualizar_tabela(arvore_users)),
+                      lambda: atualizar_tabela(arvore_users)),
                   height=40, fg_color="green").grid(row=3, column=0, columnspan=2, pady=30, sticky="ew")
 
 
@@ -294,7 +295,7 @@ def editar_usuarios_frame(frame):
                       entry_edit_login.get(),
                       entry_edit_senha.get(),
                       entry_edit_adm.get(),
-                  atualizar_tabela(arvore_users)),
+                      lambda: atualizar_tabela(arvore_users)),
                   height=40, fg_color="green").grid(row=4, column=0, columnspan=2, pady=30, sticky="ew")
 
     #MENU PARA DELETAR USUARIOS
@@ -307,7 +308,7 @@ def editar_usuarios_frame(frame):
 
 
     ctk.CTkButton(menu_delet_users, text="Deletar Usuario",
-                  command=lambda:delet_users(entry_delet_id.get(),atualizar_tabela(arvore_users)),
+                  command=lambda:delet_users(entry_delet_id.get(), lambda: atualizar_tabela(arvore_users)),
                   height=40, fg_color="red").pack(pady=30)
 
     show_frame("Editar Usuários")
