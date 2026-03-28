@@ -33,7 +33,8 @@ c.execute("""CREATE TABLE IF NOT EXISTS vendidos
 
 # FILTRO DE DADOS
 def so_texto(texto):
-    return
+    texto = texto.lower()
+    return texto.strip()
     #função para retornar apenas texto
 
 def so_numero(numeros):
@@ -74,17 +75,19 @@ for user in users:
         conn.commit()
         continue
 
-def add_users(nome,login, senha, admin):
+def add_users(nome,login, senha, admin, atualizar_tabela):
     # ID NOME LOGIN SENHA ADMIN(sim/nao)
     c.execute("INSERT INTO users (nome, login, senha, admin) VALUES (?,?,?,?)",
               (nome,login, senha, admin))
     conn.commit()
+    atualizar_tabela
 
 
-def edit_users(id,nome,login, senha, admin):
+def edit_users(id,nome,login, senha, admin, atualizar_tabela):
     c.execute("""UPDATE users SET nome = ?, login = ?, senha = ?, admin = ? WHERE id = ?""",
               (nome,login,senha,admin,id))
     conn.commit()
+    atualizar_tabela
 
 
 def atualizar_tabela(tree):
@@ -94,9 +97,10 @@ def atualizar_tabela(tree):
     for row in c.fetchall():
         tree.insert("", "end", values=row)
 
-def delet_users(id):
+def delet_users(id, atualizar_tabela):
     c.execute("DELETE FROM users WHERE id = ?", (id,))
     conn.commit()
+    atualizar_tabela
 
 
 
@@ -258,7 +262,8 @@ def editar_usuarios_frame(frame):
                       entry_add_nome.get(),
                       entry_add_login.get(),
                       entry_add_senha.get(),
-                      entry_add_adm.get()),
+                      entry_add_adm.get(),
+                  atualizar_tabela(arvore_users)),
                   height=40, fg_color="green").grid(row=3, column=0, columnspan=2, pady=30, sticky="ew")
 
 
@@ -288,7 +293,8 @@ def editar_usuarios_frame(frame):
                       entry_edit_nome.get(),
                       entry_edit_login.get(),
                       entry_edit_senha.get(),
-                      entry_edit_adm.get()),
+                      entry_edit_adm.get(),
+                  atualizar_tabela(arvore_users)),
                   height=40, fg_color="green").grid(row=4, column=0, columnspan=2, pady=30, sticky="ew")
 
     #MENU PARA DELETAR USUARIOS
@@ -301,7 +307,7 @@ def editar_usuarios_frame(frame):
 
 
     ctk.CTkButton(menu_delet_users, text="Deletar Usuario",
-                  command=lambda:delet_users(entry_delet_id.get()),
+                  command=lambda:delet_users(entry_delet_id.get(),atualizar_tabela(arvore_users)),
                   height=40, fg_color="red").pack(pady=30)
 
     show_frame("Editar Usuários")
