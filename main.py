@@ -284,8 +284,8 @@ def editar_usuarios_frame(frame):
     entry_edit_login.grid(row= 2, column= 0,padx=5, pady=10)
     entry_edit_senha = ctk.CTkEntry(menu_edit_users, placeholder_text="Novo Senha")
     entry_edit_senha.grid(row= 2, column= 1,padx=5, pady=10)
-    entry_edit_adm = ctk.CTkEntry(menu_edit_users, placeholder_text="Digite se é o administrador")
-    entry_edit_adm.grid(row= 3, column= 0,padx=5, pady=10)
+    entry_edit_adm = ctk.CTkCheckBox(menu_edit_users, text="Usuario é administrador", onvalue="sim", offvalue="nao")
+    entry_edit_adm.grid(row= 3, column= 0, columnspan=2,padx=5, pady=10)
 
     ctk.CTkButton(menu_edit_users, text="Salvar Edição",
                   command=lambda:
