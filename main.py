@@ -31,12 +31,23 @@ c.execute("""CREATE TABLE IF NOT EXISTS vendidos
     quantidade INTEGER NOT NULL,
     data_venda TEXT NOT NULL)""")
 
+# Funções de uso recorrente
+def atualizar_tabela(tree):
+    for i in tree.get_children():
+        tree.delete(i)
+    c.execute("SELECT * FROM users")
+    for row in c.fetchall():
+        tree.insert("", "end", values=row)
+
+
 # FILTRO DE DADOS
+    #função para retornar apenas texto minusculo
 def so_texto(texto):
     texto = texto.lower()
     return texto.strip()
-    #função para retornar apenas texto
 
+
+    #função para retornar apenas valores numericos
 def so_numero(numeros):
     aprovado=True
     for i in numeros:
@@ -45,7 +56,6 @@ def so_numero(numeros):
     if aprovado:
         return #normal codigo continua
     return #mensagem de erro
-    #função para retornar apenas valores numericos
 
 
 
@@ -57,6 +67,12 @@ def so_numero(numeros):
 
 # editar banco de dados de produtos
 
+def add_product(ean, nome, tipo, callback=None):
+    c.execute("INSERT INTO products (ean, nome, tipo) VALUES (?,?,?)",(ean, nome, tipo))
+    conn.commit()
+
+    if callback:
+        callback()
 # editar usuarios
 
 users = c.execute("SELECT * FROM users").fetchall()
@@ -90,12 +106,7 @@ def edit_users(id,nome,login, senha, admin, callback=None):
     if callback:
         callback()
 
-def atualizar_tabela(tree):
-    for i in tree.get_children():
-        tree.delete(i)
-    c.execute("SELECT * FROM users")
-    for row in c.fetchall():
-        tree.insert("", "end", values=row)
+
 
 def delet_users(id, callback=None):
     c.execute("DELETE FROM users WHERE id = ?", (id,))
@@ -207,14 +218,80 @@ def editar_vendas_frame(frame):
 #editar produtos
 def editar_produtos_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
-    ctk.CTkLabel(frame, text="Editar Produtos", font=ctk.CTkFont(size=28)).pack()
+
+    #treeview para db produtos
+    tree_product_frame = ctk.CTkFrame(frame)
+    tree_product_frame.grid(row=0, column=3, rowspan=4, sticky="ns")
+    tree_product_frame.grid_columnconfigure(0, weight=1)
+    tree_product_frame.grid_rowconfigure(0, weight=1)
+
+    arvore_product = ttk.Treeview(tree_product_frame,
+                                  columns=("ID", "EAN", "Nome", "Tipo"),
+                                  show="headings")
+    arvore_product.heading("ID", text="ID")
+    arvore_product.heading("EAN", text="EAN")
+    arvore_product.heading("Nome", text="Nome")
+    arvore_product.heading("Tipo", text="Tipo")
+    arvore_product.column("ID", width="50")
+    arvore_product.column("EAN", width="100")
+    arvore_product.column("Nome", width="300")
+    arvore_product.column("Tipo", width="75")
+    arvore_product.grid(row=0, column=1, rowspan=4, sticky="ns")
+
+    #barra vertical
+    v_scrollbar = ttk.Scrollbar(tree_product_frame, orient="vertical", command=arvore_product.yview)
+    arvore_product.configure(yscrollcommand=v_scrollbar)
+    v_scrollbar.grid(row=0, column=2, sticky="ns",padx=(0,10))
+    #barra horizontal
+    h_scrollbar = ttk.Scrollbar(tree_product_frame, orient="horizontal", command=arvore_product.xview)
+    arvore_product.configure(xscrollcommand=h_scrollbar)
+    h_scrollbar.grid(row=4, column=0, columnspan=5, sticky="ns", pady=(10))
+
+
+
+    #MENU PARA ADCIONAR PRODUTOS
+    menu_add_product = ctk.CTkFrame(frame)
+    menu_add_product.grid(row=0, column=0, padx=10, pady=10)
+    menu_add_product.grid_columnconfigure((0, 1), weight=1)
+    menu_add_product.grid_rowconfigure(4, weight=1)
+
+    ctk.CTkLabel(menu_add_product, text="ADD Produtos",
+                 font=ctk.CTkFont(size=28)).grid(row=0, column=0, columnspan=3, pady=(5, 15))
+
+    entry_add_product_ean = ctk.CTkEntry(menu_add_product, placeholder_text="EAN")
+    entry_add_product_ean.grid(row= 3, column= 0,padx=(10,5), pady=10)
+    ctk.CTkLabel(menu_add_product, text="Digite o nome do produto",
+                 font=ctk.CTkFont(size=12)).grid(row=1, column=0, columnspan=3, pady=(5,0))
+    entry_add_product_name = ctk.CTkTextbox(menu_add_product, width=300, height=100)
+    entry_add_product_name.grid(row= 2, column= 0, columnspan=3, padx=10, pady=10)
+    entry_add_product_type = ctk.CTkComboBox(menu_add_product, values=["Refrigerante", "Suco", "Carne", "Biscoito",
+                                                                       "Frios", "Latcinios", "Hortifrut", "limpeza",
+                                                                       "Animais de estimação", "Padaria"])
+    entry_add_product_type.grid(row= 3, column= 2,padx=(5,10), pady=10)
+
+    ctk.CTkButton(menu_add_product, text="Salvar Edição",
+                  command=lambda :add_product(entry_add_product_name.get("1.0", "end"),
+                                              entry_add_product_ean.get(),
+                                              entry_add_product_type.get(),
+                                              lambda : atualizar_tabela(arvore_product)),
+                  height=40, fg_color="green").grid(row=4, column=0, columnspan=3, pady=30, sticky="ew")
+
+
+
+    #MENU PARA EDITAR PRODUTOS
+
+
+    #MENU PARA DELETAR PRODUTOS
+
+
+
     show_frame("Editar Produtos")
 #esitar usuarios
 def editar_usuarios_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
 
     # VISUALISAÇÃO DE USUARIOS
-    tree_frame = ctk.CTkFrame(tela_app)
+    tree_frame = ctk.CTkFrame(frame)
     tree_frame.grid(row=0, column=3, rowspan=4, sticky="ns")
     tree_frame.grid_columnconfigure(0, weight=1)
     tree_frame.grid_rowconfigure(0, weight=1)
@@ -240,7 +317,7 @@ def editar_usuarios_frame(frame):
     atualizar_tabela(arvore_users)
 
     #MENU PARA ADCIONAR USUARIOS
-    menu_add_users = ctk.CTkFrame(tela_app)
+    menu_add_users = ctk.CTkFrame(frame)
     menu_add_users.grid(row=0, column=0, padx=10, pady=10)
     menu_add_users.grid_columnconfigure((0,1), weight=1)
     menu_add_users.grid_rowconfigure(4, weight=1)
@@ -269,7 +346,7 @@ def editar_usuarios_frame(frame):
 
 
     # MENU PARA EDITAR USUARIOS
-    menu_edit_users = ctk.CTkFrame(tela_app)
+    menu_edit_users = ctk.CTkFrame(frame)
     menu_edit_users.grid(row=1, column=0, padx=10, pady=10)
     menu_edit_users.grid_columnconfigure((0, 1), weight=1)
     menu_edit_users.grid_rowconfigure(4, weight=1)
@@ -299,7 +376,7 @@ def editar_usuarios_frame(frame):
                   height=40, fg_color="green").grid(row=4, column=0, columnspan=2, pady=30, sticky="ew")
 
     #MENU PARA DELETAR USUARIOS
-    menu_delet_users = ctk.CTkFrame(tela_app)
+    menu_delet_users = ctk.CTkFrame(frame)
     menu_delet_users.grid(row=3, column=0, sticky="nswe", padx=10, pady=10)
     ctk.CTkLabel(menu_delet_users, text="Deletar Usuário", font=ctk.CTkFont(size=28)).pack(padx=5, pady=(5, 15))
 
