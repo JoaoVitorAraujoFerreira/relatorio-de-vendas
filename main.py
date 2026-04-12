@@ -31,11 +31,11 @@ c.execute("""CREATE TABLE IF NOT EXISTS vendidos
     quantidade INTEGER NOT NULL,
     data_venda TEXT NOT NULL)""")
 
-# Funções de uso recorrente
-def atualizar_tabela(tree):
+# Funções de uso recorrente---------------------------------------------------------------------------------------------
+def atualizar_tabela(tree, dbTable):
     for i in tree.get_children():
         tree.delete(i)
-    c.execute("SELECT * FROM users")
+    c.execute("SELECT * FROM {}".format(dbTable))
     for row in c.fetchall():
         tree.insert("", "end", values=row)
 
@@ -59,13 +59,13 @@ def so_numero(numeros):
 
 
 
-# lançar vendas
+# lançar vendas---------------------------------------------------------------------------------------------------------
 
-# exportar relatorio
+# exportar relatorio----------------------------------------------------------------------------------------------------
 
-# editar banco de dados de vendas
+# editar banco de dados de vendas---------------------------------------------------------------------------------------
 
-# editar banco de dados de produtos
+# editar banco de dados de produtos-------------------------------------------------------------------------------------
 
 def add_product(ean, nome, tipo, callback=None):
     c.execute("INSERT INTO products (ean, nome, tipo) VALUES (?,?,?)",(ean, nome, tipo))
@@ -73,7 +73,28 @@ def add_product(ean, nome, tipo, callback=None):
 
     if callback:
         callback()
-# editar usuarios
+
+def edit_product(id, ean, nome, tipo, callback=None):
+    if ean :
+        c.execute("""UPDATE products SET ean = ? WHERE id = ?""",(ean, id))
+    if nome :
+        c.execute("""UPDATE products SET nome = ? WHERE id = ?""",(nome, id))
+    if tipo :
+        c.execute("""UPDATE products SET tipo = ? WHERE id = ?""",(tipo, id))
+    conn.commit()
+
+    if callback:
+        callback()
+
+
+def delet_product(id, callback=None):
+    c.execute("""DELETE FROM products WHERE id = ?""",(id))
+    conn.commit()
+
+    if callback:
+        callback()
+
+# editar usuarios-------------------------------------------------------------------------------------------------------
 
 users = c.execute("SELECT * FROM users").fetchall()
 
@@ -141,7 +162,7 @@ def show_frame(name):  # name = STRING!
             f.grid()
 
 
-#tela de login
+#tela de login++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def tela_login(tela):
 
     nome_frame = [name for name, f in frames.items() if f == tela][0] #seleciona um objeto
@@ -200,22 +221,22 @@ def tela_login(tela):
     ctk.CTkButton(tela, text="Entrar", command=verificar_login, height=40, fg_color="green").pack(pady=30)
 
 
-#lancar vendas
+#lancar vendas++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def vendas_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
     ctk.CTkLabel(frame, text= "Lancar vendas",font=ctk.CTkFont(size=28)).pack()
     show_frame("Lançar Vendas")
-#relatorios
+#relatorios+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def relatorios_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
     ctk.CTkLabel(frame, text="Relatórios", font=ctk.CTkFont(size=28)).pack()
     show_frame("Relatórios")
-#editar vendas
+#editar vendas++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def editar_vendas_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
     ctk.CTkLabel(frame, text="Editar Vendas", font=ctk.CTkFont(size=28)).pack()
     show_frame("Editar Vendas")
-#editar produtos
+#editar produtos++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def editar_produtos_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
 
@@ -247,11 +268,12 @@ def editar_produtos_frame(frame):
     arvore_product.configure(xscrollcommand=h_scrollbar)
     h_scrollbar.grid(row=4, column=0, columnspan=5, sticky="ns", pady=(10))
 
+    atualizar_tabela(arvore_product, "products")
 
 
     #MENU PARA ADCIONAR PRODUTOS
     menu_add_product = ctk.CTkFrame(frame)
-    menu_add_product.grid(row=0, column=0, padx=10, pady=10)
+    menu_add_product.grid(row=0, column=0, padx=10, pady=(10,5))
     menu_add_product.grid_columnconfigure((0, 1), weight=1)
     menu_add_product.grid_rowconfigure(4, weight=1)
 
@@ -269,24 +291,65 @@ def editar_produtos_frame(frame):
                                                                        "Animais de estimação", "Padaria"])
     entry_add_product_type.grid(row= 3, column= 2,padx=(5,10), pady=10)
 
-    ctk.CTkButton(menu_add_product, text="Salvar Edição",
-                  command=lambda :add_product(entry_add_product_name.get("1.0", "end"),
-                                              entry_add_product_ean.get(),
+    ctk.CTkButton(menu_add_product, text="Salvar Produto",
+                  command=lambda :add_product(entry_add_product_ean.get(),
+                                              entry_add_product_name.get("1.0", "end"),
                                               entry_add_product_type.get(),
-                                              lambda : atualizar_tabela(arvore_product)),
+                                              lambda : atualizar_tabela(
+                                                  arvore_product,
+                                                  "products")),
                   height=40, fg_color="green").grid(row=4, column=0, columnspan=3, pady=30, sticky="ew")
 
 
 
     #MENU PARA EDITAR PRODUTOS
+    menu_edit_product = ctk.CTkFrame(frame)
+    menu_edit_product.grid(row=1, column=0, padx=10, pady=5)
+    menu_edit_product.grid_columnconfigure((0, 1), weight=1)
+    menu_edit_product.grid_rowconfigure(4, weight=1)
+    ctk.CTkLabel(menu_edit_product, text="Editar Produtos",
+                 font=ctk.CTkFont(size=28)).grid(row=0, column=0, columnspan=3, pady=(5,15))
 
+    entry_edit_product_id = ctk.CTkEntry(menu_edit_product, placeholder_text="ID")
+    entry_edit_product_id.grid(row= 1, column= 0,padx=10, pady=10)
+    entry_edit_product_ean = ctk.CTkEntry(menu_edit_product, placeholder_text="Novo EAN")
+    entry_edit_product_ean.grid(row=4, column=0, padx=(10, 5), pady=10)
+    ctk.CTkLabel(menu_edit_product, text="Digite o novo nome do produto",
+                 font=ctk.CTkFont(size=12)).grid(row=2, column=0, columnspan=3, pady=(5, 0))
+    entry_edit_product_name = ctk.CTkTextbox(menu_edit_product, width=300, height=100)
+    entry_edit_product_name.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
+    entry_edit_product_type = ctk.CTkComboBox(menu_edit_product, values=["Refrigerante", "Suco", "Carne", "Biscoito",
+                                                                       "Frios", "Latcinios", "Hortifrut", "limpeza",
+                                                                       "Animais de estimação", "Padaria"])
+    entry_edit_product_type.grid(row=4, column=2, padx=(5, 10), pady=10)
+
+    ctk.CTkButton(menu_edit_product, text="Salvar Edição",
+                  command= lambda : edit_product(entry_edit_product_id.get(),
+                                                 entry_edit_product_ean.get(),
+                                                 entry_edit_product_name.get("1.0", "end"),
+                                                 entry_edit_product_type.get(),
+                                                 lambda : atualizar_tabela(arvore_product,"products")),
+                  height=40, fg_color="green").grid(row=5, column=0, columnspan=3, pady=30, sticky="ew")
 
     #MENU PARA DELETAR PRODUTOS
+    menu_delet_product = ctk.CTkFrame(frame)
+    menu_delet_product.grid(row=3, column=0, sticky="nswe", padx=10, pady=10)
+    ctk.CTkLabel(menu_delet_product, text="Deletar Usuário", font=ctk.CTkFont(size=28)).pack(padx=5, pady=(5, 15))
+
+    entry_delet_id = ctk.CTkEntry(menu_delet_product, placeholder_text="Digite o ID")
+    entry_delet_id.pack(padx=5, pady=10)
+
+    ctk.CTkButton(
+        menu_delet_product, text="Deletar Produto",
+        command=lambda: delet_product(
+            entry_delet_id.get(),
+            lambda: atualizar_tabela(arvore_product, "products")),
+        height=40, fg_color="red").pack(pady=30)
 
 
 
     show_frame("Editar Produtos")
-#esitar usuarios
+#esitar usuarios++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def editar_usuarios_frame(frame):
     for widget in frame.winfo_children(): widget.destroy()
 
@@ -314,7 +377,7 @@ def editar_usuarios_frame(frame):
 
     scrollbar.grid(row=0, column=1, sticky="ns", padx=(0, 10), pady=10)
 
-    atualizar_tabela(arvore_users)
+    atualizar_tabela(arvore_users, "users")
 
     #MENU PARA ADCIONAR USUARIOS
     menu_add_users = ctk.CTkFrame(frame)
@@ -341,7 +404,7 @@ def editar_usuarios_frame(frame):
                       entry_add_login.get(),
                       entry_add_senha.get(),
                       entry_add_adm.get(),
-                      lambda: atualizar_tabela(arvore_users)),
+                      lambda: atualizar_tabela(arvore_users, "users")),
                   height=40, fg_color="green").grid(row=3, column=0, columnspan=2, pady=30, sticky="ew")
 
 
@@ -372,7 +435,7 @@ def editar_usuarios_frame(frame):
                       entry_edit_login.get(),
                       entry_edit_senha.get(),
                       entry_edit_adm.get(),
-                      lambda: atualizar_tabela(arvore_users)),
+                      lambda: atualizar_tabela(arvore_users, "users")),
                   height=40, fg_color="green").grid(row=4, column=0, columnspan=2, pady=30, sticky="ew")
 
     #MENU PARA DELETAR USUARIOS
@@ -384,12 +447,15 @@ def editar_usuarios_frame(frame):
     entry_delet_id.pack(padx=5, pady=10)
 
 
-    ctk.CTkButton(menu_delet_users, text="Deletar Usuario",
-                  command=lambda:delet_users(entry_delet_id.get(), lambda: atualizar_tabela(arvore_users)),
-                  height=40, fg_color="red").pack(pady=30)
+    ctk.CTkButton(
+        menu_delet_users, text="Deletar Usuario",
+        command=lambda:delet_users(
+            entry_delet_id.get(),
+            lambda: atualizar_tabela(arvore_users,"users")),
+        height=40, fg_color="red").pack(pady=30)
 
     show_frame("Editar Usuários")
-
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 frames = {} #dicionario nome:frame
 for name in ["Lançar Vendas", "Relatórios", "Editar Vendas", "Editar Produtos", "Editar Usuários"]:
     frame = ctk.CTkFrame(tela_app)
